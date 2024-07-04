@@ -116,3 +116,49 @@ func TestQueryInjection(t *testing.T) {
 		fmt.Println("Gagal Login")
 	}
 }
+
+func TestQueryInjectionSafe(t *testing.T) {
+	db := GetConnection()
+	defer db.Close()
+
+	ctx := context.Background()
+
+	username := "admin'; #"
+	password := "adminxxx"
+
+	script := "SELECT username FROM users WHERE username = ? AND password = ? LIMIT 1"
+	rows, err := db.QueryContext(ctx, script, username, password)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		var username string
+		err := rows.Scan(&username)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("\n\n Sukses Login %s \n\n", username)
+	} else {
+		fmt.Printf("\n\n Gagal Login \n\n\n")
+	}
+}
+
+func TestExecSqlParameter(t *testing.T) {
+	db := GetConnection()
+	defer db.Close()
+
+	ctx := context.Background()
+
+	username := "tono"
+	password := "tono"
+
+	script := "INSERT INTO users(username, password) VALUES(?, ?)"
+	_, err := db.ExecContext(ctx, script, username, password)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Success insert new user")
+}
